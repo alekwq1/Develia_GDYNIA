@@ -103,7 +103,7 @@ const infoPoints: InfoPointData[] = [
 • Fire extinguisher 🔥🧯
 • Fire blanket 🧯🛡️
 `,
-    cameraPosition: [0, 80, 150] as [number, number, number],
+    cameraPosition: [-50, 80, 150] as [number, number, number],
   },
   {
     id: "Construction Safety Mirror",
@@ -245,13 +245,14 @@ function App() {
   }, []);
 
   useEffect(() => {
+    let url: string | null = null;
     if (loadedData) {
-      const url = URL.createObjectURL(loadedData);
+      url = URL.createObjectURL(loadedData);
       setObjectUrl(url);
-      return () => {
-        url && URL.revokeObjectURL(url);
-      };
     }
+    return () => {
+      if (url) URL.revokeObjectURL(url);
+    };
   }, [loadedData]);
 
   const focusCameraOn = (
@@ -298,25 +299,25 @@ function App() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      const st = moveState.current;
+      if (typeof e.key !== "string") return;
       switch (e.key.toLowerCase()) {
         case "w":
-          st.forward = true;
+          moveState.current.forward = true;
           break;
         case "s":
-          st.backward = true;
+          moveState.current.backward = true;
           break;
         case "a":
-          st.left = true;
+          moveState.current.left = true;
           break;
         case "d":
-          st.right = true;
+          moveState.current.right = true;
           break;
         case "q":
-          st.up = true;
+          moveState.current.up = true;
           break;
         case "e":
-          st.down = true;
+          moveState.current.down = true;
           break;
         case "r":
           resetCamera();
@@ -326,43 +327,42 @@ function App() {
           break;
         case "escape":
           if (isFullscreen) toggleFullscreen();
-          break;
-        default:
+          setActiveInfoPoint(null);
           break;
       }
     };
+
     const handleKeyUp = (e: KeyboardEvent) => {
-      const st = moveState.current;
+      if (typeof e.key !== "string") return;
       switch (e.key.toLowerCase()) {
         case "w":
-          st.forward = false;
+          moveState.current.forward = false;
           break;
         case "s":
-          st.backward = false;
+          moveState.current.backward = false;
           break;
         case "a":
-          st.left = false;
+          moveState.current.left = false;
           break;
         case "d":
-          st.right = false;
+          moveState.current.right = false;
           break;
         case "q":
-          st.up = false;
+          moveState.current.up = false;
           break;
         case "e":
-          st.down = false;
-          break;
-        default:
+          moveState.current.down = false;
           break;
       }
     };
+
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [isFullscreen]);
+  }, [isFullscreen, resetCamera, toggleFullscreen]);
 
   useEffect(() => {
     let animationFrameId: number;
@@ -793,9 +793,9 @@ function App() {
                     value={
                       Math.round(((userGlbRot[ax] * 180) / Math.PI) * 100) / 100
                     }
-                    step={1}
-                    min={-180}
-                    max={180}
+                    step={100}
+                    min={-9999}
+                    max={9999}
                     style={{ width: 36, marginLeft: 2 }}
                     onChange={(e) =>
                       setUserGlbRot(
@@ -852,7 +852,7 @@ function App() {
           gl={{ antialias: false }}
           dpr={dpr}
           camera={{
-            position: isMobile() ? [180, 180, 40] : [100, 150, 36.5],
+            position: isMobile() ? [180, 180, 40] : [20, 110, 7.4],
             fov: isMobile() ? 35 : 60,
             near: 0.01,
             far: 500000,
