@@ -183,7 +183,7 @@ function App() {
     1, 1, 1,
   ]);
 
-  const getDpr = () => (isMobile() ? 1 : Math.min(window.devicePixelRatio, 2));
+  const getDpr = () => (isMobile() ? 2 : Math.min(window.devicePixelRatio, 2));
   const maxSplats = isMobile() ? 5000000 : 10000000;
   const [splats] = useState(maxSplats);
   const effectiveSplats = Math.min(maxSplats, splats);
