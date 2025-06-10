@@ -570,7 +570,7 @@ function App() {
             textDecoration: "none",
           }}
         >
-          ↔️ Porównanie postępu
+          ↔️ Progress Compare
         </a>
       </div>
 
