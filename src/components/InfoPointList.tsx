@@ -5,6 +5,7 @@ type InfoPointListProps = {
   activeId: string | null;
   onSelect: (id: string) => void;
   onClose: () => void;
+  style?: React.CSSProperties;
 };
 
 export function InfoPointList({
