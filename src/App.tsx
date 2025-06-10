@@ -170,7 +170,7 @@ function App() {
 
   // --- STAŁY PUBLICZNY GLB ---
   const [showPublicGlb, setShowPublicGlb] = useState(false);
-  const publicGlbPos: [number, number, number] = [14, 1.8, -23];
+  const publicGlbPos: [number, number, number] = [14, 0.8, -23];
   const publicGlbRot: [number, number, number] = [0, 160, 0];
   const publicGlbScale: [number, number, number] = [1, 1, 1];
 
