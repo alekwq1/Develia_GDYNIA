@@ -1,5 +1,5 @@
 // File: Splat.tsx
-import React, { useEffect, useRef, useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import * as THREE from "three";
 import SplatSortWorker from "./splat-sort-worker?worker";
 import { fragmentShaderSource, vertexShaderSource } from "./splat-shaders";
@@ -8,12 +8,6 @@ import { useFrame, useThree } from "@react-three/fiber";
 // Maksymalna liczba splatów
 const MAX_SPLATS = 10000000;
 
-// Konwerter stopnie -> radiany
-enum Axis {
-  X = "x",
-  Y = "y",
-  Z = "z",
-}
 const toRad = (deg: number) => (deg * Math.PI) / 180;
 
 export type RotationDeg = {
