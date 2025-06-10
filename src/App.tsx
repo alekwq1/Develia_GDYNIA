@@ -130,7 +130,7 @@ type GLBModelProps = {
 
 function GLBModel({
   url,
-  position = [14, 1.6, -23],
+  position = [14, 0.6, -23],
   rotation = [0, 160, 0],
   scale = [1, 1, 1],
   visible,
