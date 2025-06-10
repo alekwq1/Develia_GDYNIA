@@ -1,4 +1,4 @@
 git add .
-git commit -m "Twoja wiadomość opisująca zmiany"
+git commit -m "optymalizacja na mobilke"
 git push
 

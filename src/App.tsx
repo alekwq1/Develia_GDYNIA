@@ -1,7 +1,6 @@
 import React, { Suspense, useState, useEffect, useRef } from "react";
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useLoader } from "@react-three/fiber";
 import { Environment, CameraControls } from "@react-three/drei";
-import { useLoader } from "@react-three/fiber";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 import IFCModel, { type IFCElementProperties } from "./components/IFCModel";
@@ -12,7 +11,6 @@ import IFCPropertiesPanel from "./components/IFCPropertiesPanel";
 import CameraControlsButtons from "./components/CameraControlsButtons";
 import { InfoPointList } from "./components/InfoPointList";
 
-// Typ do InfoPointów (żeby nie było konfliktów!)
 type InfoPointData = {
   id: string;
   position: [number, number, number];
@@ -32,8 +30,8 @@ const splatOption = {
   scale: [1, 1, 1] as [number, number, number],
 };
 
-// Zamieniamy wszystkie position/cameraPosition na tuple [number, number, number]
 const infoPoints: InfoPointData[] = [
+  // --- Wstaw tu swoje punkty, bez zmian (przykład w Twoim kodzie wyżej) ---
   {
     id: "AED on Site & Eye Wash Station",
     position: [-62, 3, 40] as [number, number, number],
@@ -163,18 +161,15 @@ function App() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showInfoPoints, setShowInfoPoints] = useState(true);
 
-  // --- PASSWORD MODAL ---
   const [password, setPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showPasswordError, setShowPasswordError] = useState(false);
 
-  // --- STAŁY PUBLICZNY GLB ---
   const [showPublicGlb, setShowPublicGlb] = useState(false);
   const publicGlbPos: [number, number, number] = [14, 0.8, -23];
   const publicGlbRot: [number, number, number] = [0, 160, 0];
   const publicGlbScale: [number, number, number] = [1, 1, 1];
 
-  // --- GLB upload użytkownika ---
   const [userGlbUrl, setUserGlbUrl] = useState<string | null>(null);
   const [showUserGlb, setShowUserGlb] = useState(true);
   const [userGlbParamsOpen, setUserGlbParamsOpen] = useState(false);
@@ -188,14 +183,27 @@ function App() {
     1, 1, 1,
   ]);
 
-  // --- SPLATY ---
-  const dpr = 2;
+  const getDpr = () => (isMobile() ? 1 : Math.min(window.devicePixelRatio, 2));
   const maxSplats = isMobile() ? 5000000 : 10000000;
   const [splats] = useState(maxSplats);
   const effectiveSplats = Math.min(maxSplats, splats);
 
-  // --- KAMERA ---
   const cameraControls = useRef<any>(null);
+
+  // Panel InfoPointów na mobile (przewijany na dole ekranu)
+  const infoPanelStyle: React.CSSProperties = isMobile()
+    ? {
+        position: "fixed",
+        left: 0,
+        bottom: 0,
+        width: "100vw",
+        height: "36vh",
+        background: "rgba(255,255,255,0.95)",
+        zIndex: 99,
+        overflowY: "auto",
+        borderTop: "1px solid #e2e8f0",
+      }
+    : {};
 
   const handlePasswordSubmit = (
     e: React.FormEvent<HTMLFormElement> | React.KeyboardEvent<HTMLInputElement>
@@ -234,7 +242,7 @@ function App() {
         const blob = new Blob(chunks);
         setLoadedData(blob);
         setProgress(100);
-        setTimeout(() => setShowLoading(false), 1000);
+        setTimeout(() => setShowLoading(false), 800);
       } catch (error) {
         setShowLoading(false);
         setProgress(100);
@@ -285,6 +293,16 @@ function App() {
       document.exitFullscreen();
       setIsFullscreen(false);
     }
+  };
+
+  // Mobile-friendly CameraControls props
+  const controlProps = {
+    azimuthRotateSpeed: isMobile() ? 0.45 : 1,
+    polarRotateSpeed: isMobile() ? 0.5 : 1,
+    truckSpeed: isMobile() ? 0.4 : 1,
+    minDistance: 8,
+    maxDistance: 900,
+    verticalDragToForward: false,
   };
 
   const MOVE_STEP = 0.7;
@@ -460,7 +478,6 @@ function App() {
     );
   }
 
-  // --- RENDER ---
   return (
     <div
       style={{
@@ -479,27 +496,26 @@ function App() {
       <div
         style={{
           position: "fixed",
-          left: 32,
-          bottom: 26,
-          zIndex: 40,
+          left: 16,
+          bottom: 16,
+          zIndex: 90,
           display: "flex",
-          gap: 12,
+          gap: 8,
+          flexDirection: isMobile() ? "column" : "row",
           alignItems: "center",
         }}
       >
         <button
           style={{
-            background: "rgba(33,140,227,0.90)",
-            borderRadius: "12px",
+            background: "#2190e3",
+            borderRadius: 10,
             color: "white",
             fontWeight: 600,
-            fontSize: 12,
-            padding: "10px 30px",
+            fontSize: 13,
+            padding: "8px 22px",
             border: "none",
-            boxShadow: "0 2px 8px rgba(33,140,227,0.08)",
             cursor: "pointer",
-            transition: "all 0.2s",
-            letterSpacing: 0.3,
+            letterSpacing: 0.2,
           }}
           onClick={() => setShowHowToUse(true)}
         >
@@ -507,16 +523,15 @@ function App() {
         </button>
         <button
           style={{
-            background: showInfoPoints
-              ? "rgba(33,140,227,0.90)"
-              : "rgba(150, 150, 150, 0.6)",
-            borderRadius: "12px",
+            background: showInfoPoints ? "#2190e3" : "#bbb",
+            borderRadius: 10,
             color: "white",
             fontWeight: 600,
-            fontSize: 12,
-            padding: "10px 24px",
+            fontSize: 13,
+            padding: "8px 18px",
             border: "none",
             cursor: "pointer",
+            letterSpacing: 0.2,
           }}
           onClick={() => setShowInfoPoints((v) => !v)}
         >
@@ -525,7 +540,7 @@ function App() {
       </div>
       {showHowToUse && <HowToUseModal onClose={() => setShowHowToUse(false)} />}
 
-      {/* Przyciski kamera/fullscreen (prawy dolny róg) */}
+      {/* Kamera/fullscreen (prawy dolny róg) */}
       <CameraControlsButtons
         resetCamera={resetCamera}
         isFullscreen={isFullscreen}
@@ -536,9 +551,9 @@ function App() {
       <div
         style={{
           position: "fixed",
-          right: 32,
-          top: 22,
-          zIndex: 50,
+          right: 16,
+          top: 16,
+          zIndex: 90,
         }}
       >
         <a
@@ -549,32 +564,30 @@ function App() {
             background: "#2190e3",
             color: "white",
             fontWeight: 600,
-            fontSize: 14,
-            borderRadius: 11,
-            boxShadow: "0 2px 8px rgba(33,140,227,0.08)",
-            padding: "5px 28px",
+            fontSize: 13,
+            borderRadius: 9,
+            padding: "7px 18px",
             textDecoration: "none",
           }}
         >
-          ↔️ Progress comparison slider
+          ↔️ Porównanie postępu
         </a>
       </div>
 
-      {/* IFC + GLB icons/panels (lewy górny róg) */}
-      {/* --- GÓRNY LEWY RÓG: przyciski w jednej linii --- */}
+      {/* Górny lewy róg: przyciski */}
       <div
         style={{
           position: "fixed",
           left: isMobile() ? 8 : 24,
           top: isMobile() ? 8 : 24,
-          zIndex: 51,
+          zIndex: 91,
           display: "flex",
-          gap: 16,
+          gap: 12,
+          flexWrap: "wrap",
           alignItems: "center",
-          flexDirection: "row",
+          justifyContent: "flex-start",
         }}
       >
-        {/* Przycisk IFC */}
         <div
           style={{
             display: "flex",
@@ -616,8 +629,6 @@ function App() {
             IFC
           </span>
         </div>
-
-        {/* Przycisk GLB */}
         <div
           style={{
             display: "flex",
@@ -661,8 +672,6 @@ function App() {
             GLB
           </span>
         </div>
-
-        {/* Przycisk UPLOAD GLB */}
         <div
           style={{
             display: "flex",
@@ -706,14 +715,14 @@ function App() {
         </div>
       </div>
 
-      {/* --- PANEL UPLOADU GLB (poza górną linią przycisków!) --- */}
+      {/* Panel uploadu GLB */}
       {userGlbParamsOpen && (
         <div
           style={{
             position: "fixed",
             left: isMobile() ? 8 : 24,
-            top: isMobile() ? 70 : 90, // pod paskiem z przyciskami
-            zIndex: 55,
+            top: isMobile() ? 70 : 90,
+            zIndex: 92,
             background: "#f5faff",
             borderRadius: 10,
             padding: "14px 22px",
@@ -850,10 +859,10 @@ function App() {
         <Canvas
           className="h-full w-full touch-action-none"
           gl={{ antialias: false }}
-          dpr={dpr}
+          dpr={getDpr()}
           camera={{
-            position: isMobile() ? [180, 180, 40] : [20, 110, 7.4],
-            fov: isMobile() ? 35 : 60,
+            position: isMobile() ? [90, 70, 30] : [20, 110, 7.4],
+            fov: isMobile() ? 36 : 60,
             near: 0.01,
             far: 500000,
           }}
@@ -865,21 +874,21 @@ function App() {
             top: 0,
             left: 0,
             zIndex: 2,
+            touchAction: "none",
           }}
         >
           <ambientLight intensity={0.8} />
-          <CameraControls ref={cameraControls} makeDefault />
+          <CameraControls ref={cameraControls} makeDefault {...controlProps} />
           <Suspense fallback={null}>
             <group
               position={splatOption.position}
               rotation={splatOption.rotation}
               scale={splatOption.scale}
             >
-              {/* SPLAT MODEL */}
               <Splat url={objectUrl} maxSplats={effectiveSplats} />
-              {/* INFOPOINTY */}
               {showInfoPoints && (
                 <InfoPointList
+                  style={infoPanelStyle}
                   points={infoPoints}
                   activeId={activeInfoPoint}
                   onSelect={(id) => {
@@ -892,7 +901,6 @@ function App() {
                 />
               )}
             </group>
-            {/* IFC */}
             {showIFC && (
               <IFCModel
                 onPropertiesSelected={setIfcProperties}
@@ -900,7 +908,6 @@ function App() {
                 visible={showIFC}
               />
             )}
-            {/* GLB z public/models */}
             {showPublicGlb && (
               <Suspense fallback={null}>
                 <GLBModel
@@ -912,7 +919,6 @@ function App() {
                 />
               </Suspense>
             )}
-            {/* GLB z uploadu */}
             {showUserGlb && userGlbUrl && (
               <Suspense fallback={null}>
                 <GLBModel
