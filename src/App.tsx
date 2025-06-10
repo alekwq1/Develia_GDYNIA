@@ -26,7 +26,7 @@ const isMobile = () => window.innerWidth < 768;
 const APP_PASSWORD = "12345678";
 const splatOption = {
   name: "04.06.2024",
-  url: "/models/Equinor_02_06_2025.splat",
+  url: "https://huggingface.co/Alekso/Equinor_02_06_2025/resolve/main/Equinor_02_06_2025.splat",
   position: [0, 0, 0] as [number, number, number],
   rotation: [0, 0, 0] as [number, number, number],
   scale: [1, 1, 1] as [number, number, number],
