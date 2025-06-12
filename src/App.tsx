@@ -2,11 +2,9 @@ import { Suspense, useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Environment, CameraControls } from "@react-three/drei";
 import { Splat } from "./splat-object";
-import IFCModel from "./components/IFCModel";
+import IFCModel, { IFCElementProperties } from "./components/IFCModel"; // <-- POPRAWNY IMPORT!
 import HowToUseModal from "./components/HowToUseModal";
 import LoadingOverlay from "./components/LoadingOverlay";
-import { IFCElementProperties } from "./components/IFCPropertiesPanel";
-
 import CameraControlsButtons from "./components/CameraControlsButtons";
 import AddInfoPointModal from "./components/AddInfoPointModal";
 import GLBModel from "./components/GLBModel";
@@ -16,6 +14,7 @@ import PasswordScreen from "./components/PasswordScreen";
 import BottomLeftPanel from "./components/BottomLeftPanel";
 import InfoPointCanvasGroup from "./components/InfoPointCanvasGroup";
 import InfoPointDetailsPanel from "./components/InfoPointDetailsPanel";
+import IFCPropertiesPanel from "./components/IFCPropertiesPanel";
 import { useInfoPoints } from "./hooks/useInfoPoints";
 import { useCameraControls } from "./hooks/useCameraControls";
 import { useCameraWASD } from "./hooks/useCameraWASD";

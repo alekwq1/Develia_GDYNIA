@@ -10,9 +10,6 @@ export interface IFCProps {
 }
 
 export type IFCElementProperties = {
-  GlobalId?: { value: string };
-  Name?: { value: string };
-  Description?: { value: string };
   [key: string]: { value: unknown } | undefined;
 };
 
