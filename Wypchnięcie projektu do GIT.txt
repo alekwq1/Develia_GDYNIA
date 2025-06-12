@@ -1,4 +1,4 @@
 git add .
-git commit -m "optymalizacja na mobilke"
+git commit -m "poprawiono"
 git push
 

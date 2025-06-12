@@ -311,7 +311,6 @@ function App() {
 
       {/* Dolny lewy panel */}
       <BottomLeftPanel
-        showHowToUse={showHowToUse}
         setShowHowToUse={setShowHowToUse}
         showInfoPoints={showInfoPoints}
         setShowInfoPoints={setShowInfoPoints}
