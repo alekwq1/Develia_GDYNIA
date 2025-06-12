@@ -17,9 +17,9 @@ export type RotationDeg = {
 };
 
 export function Splat({
-  url = "https://huggingface.co/Alekso/Equinor_02_06_2025/resolve/main/Equinor_02_06_2025.splat",
+  url = "https://huggingface.co/Alekso/Gdynia_2025_06_08/resolve/main/08_06_2025.splat",
   maxSplats = MAX_SPLATS,
-  rotationDeg = { x: 180, y: 0, z: 0 }, // domyślna orientacja w stopniach
+  rotationDeg = { x: 180, y: -145, z: 0 }, // domyślna orientacja w stopniach
 }: {
   url?: string;
   maxSplats?: number;

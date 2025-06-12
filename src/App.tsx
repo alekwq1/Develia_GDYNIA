@@ -1,175 +1,47 @@
-import React, { Suspense, useState, useEffect, useRef } from "react";
-import { Canvas, useLoader } from "@react-three/fiber";
+import React, { Suspense, useRef, useState } from "react";
+import { Canvas } from "@react-three/fiber";
 import { Environment, CameraControls } from "@react-three/drei";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-
-import IFCModel, { type IFCElementProperties } from "./components/IFCModel";
 import { Splat } from "./splat-object";
+import IFCModel from "./components/IFCModel";
 import HowToUseModal from "./components/HowToUseModal";
 import LoadingOverlay from "./components/LoadingOverlay";
 import IFCPropertiesPanel from "./components/IFCPropertiesPanel";
 import CameraControlsButtons from "./components/CameraControlsButtons";
-import { InfoPointList } from "./components/InfoPointList";
+import AddInfoPointModal from "./components/AddInfoPointModal";
+import GLBModel from "./components/GLBModel";
+import TopLeftButtons from "./components/TopLeftButtons";
+import UserGlbUploadPanel from "./components/UserGlbUploadPanel";
+import PasswordScreen from "./components/PasswordScreen";
+import BottomLeftPanel from "./components/BottomLeftPanel";
+import InfoPointCanvasGroup from "./components/InfoPointCanvasGroup";
+import InfoPointDetailsPanel from "./components/InfoPointDetailsPanel";
+import { useInfoPoints } from "./hooks/useInfoPoints";
+import { useCameraControls } from "./hooks/useCameraControls";
+import { useCameraWASD } from "./hooks/useCameraWASD";
+import { useSplatLoader } from "./hooks/useSplatLoader";
+import { useAuth } from "./hooks/useAuth";
+import { InfoPointData } from "./utils/types";
+import { APP_PASSWORD, PUBLIC_GLB } from "./utils/constants";
+import { isMobile, getInfoPanelStyle } from "./utils/helpers";
 
-type InfoPointData = {
-  id: string;
-  position: [number, number, number];
-  label: string;
-  icon: string;
-  content: string;
-  cameraPosition?: [number, number, number];
-};
-
-const isMobile = () => window.innerWidth < 768;
-const APP_PASSWORD = "12345678";
 const splatOption = {
   name: "04.06.2024",
-  url: "https://huggingface.co/Alekso/Equinor_02_06_2025/resolve/main/Equinor_02_06_2025.splat",
+  url: "https://huggingface.co/Alekso/Gdynia_2025_06_08/resolve/main/08_06_2025.splat",
   position: [0, -1, 0] as [number, number, number],
   rotation: [0, 0, 0] as [number, number, number],
   scale: [1, 1, 1] as [number, number, number],
 };
 
-const infoPoints: InfoPointData[] = [
-  // --- Wstaw tu swoje punkty, bez zmian (przykład w Twoim kodzie wyżej) ---
-  {
-    id: "AED on Site & Eye Wash Station",
-    position: [-62, 3, 40] as [number, number, number],
-    label: "AED on Site & Eye Wash Station",
-    icon: "💓",
-    content: `•	AED: 🏥⚡
-•	Eye wash: 👁️🚿
-`,
-    cameraPosition: [-15, 65, 80] as [number, number, number],
-  },
-  {
-    id: "H&S Board (Health & Safety)2",
-    position: [-7, 3, -35] as [number, number, number],
-    label: "H&S Board (Health & Safety)",
-    icon: "⛑️",
-    content: "🧯⛑️ (fire extinguisher + first aid kit)",
-    cameraPosition: [50, 50, -50] as [number, number, number],
-  },
-  {
-    id: "Pedestrian Communication Route",
-    position: [-38, 3, 20] as [number, number, number],
-    label: "Pedestrian Communication Route",
-    icon: "🚸",
-    content: "Pedestrian Communication Route",
-    cameraPosition: [0, 100, 35] as [number, number, number],
-  },
-  {
-    id: "No Entry – Seagull Nesting Area",
-    position: [-30, 3, 55] as [number, number, number],
-    label: "No Entry – Seagull Nesting Area",
-    icon: "🐦",
-    content: "⛔🐦 No Entry – Seagull Nesting Area",
-    cameraPosition: [-15, 65, 80] as [number, number, number],
-  },
-  {
-    id: "Emergency Board – Nearest Hospital Phone Number",
-    position: [-57, 3, 22] as [number, number, number],
-    label: "NEmergency Board – Nearest Hospital Phone Number",
-    icon: "📞",
-    content: "📞🏥 Emergency Board – Nearest Hospital Phone Number",
-    // cameraPosition pominięty – OK!
-  },
-  {
-    id: "No Entry – Fuel Storage Area",
-    position: [-50, 3, 0] as [number, number, number],
-    label: "No Entry – Fuel Storage Area",
-    icon: "⛽",
-    content: "⛔⛽ No Entry – Fuel Storage Area",
-    cameraPosition: [0, 100, 35] as [number, number, number],
-  },
-  {
-    id: "H&S Board (Health & Safety)",
-    position: [45, 3, -15] as [number, number, number],
-    label: "H&S Board (Health & Safety)",
-    icon: "⛑️",
-    content: `•	Lifebuoy with rope: 🛟
-       •	First aid kit + assigned personnel list: 💊📜`,
-    cameraPosition: [60, 150, 80] as [number, number, number],
-  },
-  {
-    id: "Safety Board",
-    position: [-50, 3, 65] as [number, number, number],
-    label: "Safety Board",
-    icon: "🟢",
-    content: `• Evacuation assembly point 🚨
-• First aid kit 💊🩹
-• Fire extinguisher 🔥🧯
-• Fire blanket 🧯🛡️
-`,
-    cameraPosition: [-50, 80, 150] as [number, number, number],
-  },
-  {
-    id: "Construction Safety Mirror",
-    position: [-62, 10, 22] as [number, number, number],
-    label: "Construction Safety Mirror",
-    icon: "🔍",
-    content: `Construction Safety Mirror🔍👷‍♂️
-`,
-    cameraPosition: [0, 120, 35] as [number, number, number],
-  },
-];
-
-const PUBLIC_GLB = { label: "Building", url: "/models/building.glb" };
-
-const degToRad = (deg: number): number => (deg * Math.PI) / 180;
-
-type GLBModelProps = {
-  url: string;
-  position?: [number, number, number];
-  rotation?: [number, number, number];
-  scale?: [number, number, number];
-  visible: boolean;
-};
-
-function GLBModel({
-  url,
-  position = [14, 0.6, -23],
-  rotation = [0, 160, 0],
-  scale = [1, 1, 1],
-  visible,
-}: GLBModelProps) {
-  const radianRotation = rotation.map(degToRad) as [number, number, number];
-  const gltf = useLoader(GLTFLoader, url);
-  if (!visible) return null;
-  return (
-    <primitive
-      object={gltf.scene}
-      dispose={null}
-      position={position}
-      rotation={radianRotation}
-      scale={scale}
-    />
-  );
-}
-
 function App() {
-  // --- STANY ---
+  const { infoPoints, addInfoPoint, editInfoPoint, deleteInfoPoint } =
+    useInfoPoints();
+  const [showAddModal, setShowAddModal] = useState(false);
   const [showIFC, setShowIFC] = useState(false);
-  const [ifcProperties, setIfcProperties] =
-    useState<IFCElementProperties | null>(null);
-  const [progress, setProgress] = useState(0);
-  const [showLoading, setShowLoading] = useState(true);
-  const [loadedData, setLoadedData] = useState<Blob | null>(null);
-  const [objectUrl, setObjectUrl] = useState<string | null>(null);
-  const [activeInfoPoint, setActiveInfoPoint] = useState<string | null>(null);
+  const [ifcProperties, setIfcProperties] = useState<any>(null);
   const [showHowToUse, setShowHowToUse] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showInfoPoints, setShowInfoPoints] = useState(true);
-
-  const [password, setPassword] = useState("");
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [showPasswordError, setShowPasswordError] = useState(false);
-
   const [showPublicGlb, setShowPublicGlb] = useState(false);
-  const publicGlbPos: [number, number, number] = [14, 0.8, -23];
-  const publicGlbRot: [number, number, number] = [0, 160, 0];
-  const publicGlbScale: [number, number, number] = [1, 1, 1];
-
   const [userGlbUrl, setUserGlbUrl] = useState<string | null>(null);
   const [showUserGlb, setShowUserGlb] = useState(true);
   const [userGlbParamsOpen, setUserGlbParamsOpen] = useState(false);
@@ -183,298 +55,97 @@ function App() {
     1, 1, 1,
   ]);
 
-  const getDpr = () => (isMobile() ? 2 : Math.min(window.devicePixelRatio, 2));
-  const maxSplats = isMobile() ? 5000000 : 10000000;
-  const [splats] = useState(maxSplats);
-  const effectiveSplats = Math.min(maxSplats, splats);
+  // Tryb edycji i hasło
+  const [editMode, setEditMode] = useState(false);
+  const [askPassword, setAskPassword] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
+  const EDIT_PASSWORD = "2222";
 
+  // InfoPoint do podglądu (dymek)
+  const [previewInfoPointId, setPreviewInfoPointId] = useState<string | null>(
+    null
+  );
+
+  // InfoPoint do edycji (panel po prawej)
+  const [editingInfoPointId, setEditingInfoPointId] = useState<string | null>(
+    null
+  );
+  const editingPoint = infoPoints.find((p) => p.id === editingInfoPointId);
+
+  // CameraControls ref
   const cameraControls = useRef<any>(null);
 
-  // Panel InfoPointów na mobile (przewijany na dole ekranu)
-  const infoPanelStyle: React.CSSProperties = isMobile()
-    ? {
-        position: "fixed",
-        left: 0,
-        bottom: 0,
-        width: "100vw",
-        height: "36vh",
-        background: "rgba(255,255,255,0.95)",
-        zIndex: 99,
-        overflowY: "auto",
-        borderTop: "1px solid #e2e8f0",
-      }
-    : {};
+  // Autoryzacja
+  const {
+    password,
+    setPassword,
+    isAuthenticated,
+    showPasswordError,
+    handlePasswordSubmit,
+  } = useAuth();
 
-  const handlePasswordSubmit = (
-    e: React.FormEvent<HTMLFormElement> | React.KeyboardEvent<HTMLInputElement>
-  ) => {
-    e.preventDefault?.();
-    if (password === APP_PASSWORD) {
-      setIsAuthenticated(true);
-      setShowPasswordError(false);
-      setPassword("");
+  const { objectUrl, progress, showLoading } = useSplatLoader(splatOption.url);
+  const cameraHooks = useCameraControls(setEditingInfoPointId, cameraControls);
+
+  useCameraWASD(
+    cameraControls,
+    isFullscreen,
+    cameraHooks.resetCamera,
+    () => cameraHooks.toggleFullscreen(isFullscreen, setIsFullscreen),
+    setEditingInfoPointId
+  );
+
+  // Kliknięcie w marker/listę
+  const handleInfoPointClick = (id: string) => {
+    if (editMode) {
+      setEditingInfoPointId(id);
     } else {
-      setShowPasswordError(true);
-      setPassword("");
+      setPreviewInfoPointId(id);
+      const point = infoPoints.find((p) => p.id === id);
+      if (!point || !cameraControls.current) return;
+      if (point.cameraPosition) {
+        cameraControls.current.setLookAt(
+          point.cameraPosition[0],
+          point.cameraPosition[1],
+          point.cameraPosition[2],
+          point.position[0],
+          point.position[1],
+          point.position[2],
+          true
+        );
+      } else {
+        cameraControls.current.setLookAt(
+          point.position[0] + 6,
+          point.position[1] + 7,
+          point.position[2] + 6,
+          point.position[0],
+          point.position[1],
+          point.position[2],
+          true
+        );
+      }
     }
   };
 
-  useEffect(() => {
-    setShowLoading(true);
-    const downloadFile = async (url: string) => {
-      try {
-        const response = await fetch(url);
-        const reader = response.body?.getReader();
-        const contentLength = response.headers.get("content-length");
-        let receivedLength = 0;
-        const chunks: Uint8Array[] = [];
-        if (!contentLength) return;
-        const totalLength = parseInt(contentLength, 10);
-        while (receivedLength < totalLength) {
-          const { done, value } = (await reader?.read()) ?? {};
-          if (done) break;
-          if (value) {
-            chunks.push(value);
-            receivedLength += value.length;
-            setProgress(Math.round((receivedLength / totalLength) * 100));
-          }
-        }
-        const blob = new Blob(chunks);
-        setLoadedData(blob);
-        setProgress(100);
-        setTimeout(() => setShowLoading(false), 800);
-      } catch (error) {
-        setShowLoading(false);
-        setProgress(100);
-        console.error("Error loading splat:", error);
-      }
-    };
-    downloadFile(splatOption.url);
-  }, []);
+  // Ustaw kamerę (do panelu edycji)
+  const getCurrentCameraPosition = () =>
+    cameraControls?.current?.camera?.position
+      ? [
+          cameraControls.current.camera.position.x,
+          cameraControls.current.camera.position.y,
+          cameraControls.current.camera.position.z,
+        ]
+      : [0, 0, 0];
 
-  useEffect(() => {
-    let url: string | null = null;
-    if (loadedData) {
-      url = URL.createObjectURL(loadedData);
-      setObjectUrl(url);
-    }
-    return () => {
-      if (url) URL.revokeObjectURL(url);
-    };
-  }, [loadedData]);
-
-  const focusCameraOn = (
-    cameraPos: [number, number, number],
-    targetPos: [number, number, number]
-  ) => {
-    if (!cameraControls.current) return;
-    cameraControls.current.setLookAt(
-      cameraPos[0],
-      cameraPos[1],
-      cameraPos[2],
-      targetPos[0],
-      targetPos[1],
-      targetPos[2],
-      true
-    );
-  };
-
-  const resetCamera = () => {
-    if (!cameraControls.current) return;
-    cameraControls.current.setLookAt(20, 110, 7.4, 0, 0, 0, true);
-    setActiveInfoPoint(null);
-  };
-
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen();
-      setIsFullscreen(true);
-    } else {
-      document.exitFullscreen();
-      setIsFullscreen(false);
-    }
-  };
-
-  // Mobile-friendly CameraControls props
-  const controlProps = {
-    azimuthRotateSpeed: isMobile() ? 0.45 : 1,
-    polarRotateSpeed: isMobile() ? 0.5 : 1,
-    truckSpeed: isMobile() ? 0.4 : 1,
-    minDistance: 8,
-    maxDistance: 900,
-    verticalDragToForward: false,
-  };
-
-  const MOVE_STEP = 0.7;
-  const moveState = useRef({
-    forward: false,
-    backward: false,
-    left: false,
-    right: false,
-    up: false,
-    down: false,
-  });
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (typeof e.key !== "string") return;
-      switch (e.key.toLowerCase()) {
-        case "w":
-          moveState.current.forward = true;
-          break;
-        case "s":
-          moveState.current.backward = true;
-          break;
-        case "a":
-          moveState.current.left = true;
-          break;
-        case "d":
-          moveState.current.right = true;
-          break;
-        case "q":
-          moveState.current.up = true;
-          break;
-        case "e":
-          moveState.current.down = true;
-          break;
-        case "r":
-          resetCamera();
-          break;
-        case "f":
-          toggleFullscreen();
-          break;
-        case "escape":
-          if (isFullscreen) toggleFullscreen();
-          setActiveInfoPoint(null);
-          break;
-      }
-    };
-
-    const handleKeyUp = (e: KeyboardEvent) => {
-      if (typeof e.key !== "string") return;
-      switch (e.key.toLowerCase()) {
-        case "w":
-          moveState.current.forward = false;
-          break;
-        case "s":
-          moveState.current.backward = false;
-          break;
-        case "a":
-          moveState.current.left = false;
-          break;
-        case "d":
-          moveState.current.right = false;
-          break;
-        case "q":
-          moveState.current.up = false;
-          break;
-        case "e":
-          moveState.current.down = false;
-          break;
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
-    };
-  }, [isFullscreen, resetCamera, toggleFullscreen]);
-
-  useEffect(() => {
-    let animationFrameId: number;
-    function animateMove() {
-      const controls = cameraControls.current;
-      if (controls) {
-        const st = moveState.current;
-        if (st.forward) controls.forward(MOVE_STEP, false);
-        if (st.backward) controls.forward(-MOVE_STEP, false);
-        if (st.left) controls.truck(-MOVE_STEP, 0, false);
-        if (st.right) controls.truck(MOVE_STEP, 0, false);
-        if (st.up) controls.truck(0, MOVE_STEP, false);
-        if (st.down) controls.truck(0, -MOVE_STEP, false);
-      }
-      animationFrameId = requestAnimationFrame(animateMove);
-    }
-    animateMove();
-    return () => cancelAnimationFrame(animationFrameId);
-  }, []);
-
+  // Logowanie
   if (!isAuthenticated) {
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          minWidth: "100vw",
-          background: "#dce2e8",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          position: "fixed",
-          inset: 0,
-          zIndex: 10000,
-        }}
-      >
-        <form
-          onSubmit={handlePasswordSubmit}
-          style={{
-            background: "#fff",
-            padding: "40px 28px",
-            borderRadius: 20,
-            boxShadow: "0 4px 32px #0002",
-            display: "flex",
-            flexDirection: "column",
-            gap: 20,
-            minWidth: 320,
-            alignItems: "center",
-          }}
-        >
-          <span style={{ fontSize: 24, fontWeight: 700, color: "#1d3a55" }}>
-            🔒 Enter password
-          </span>
-          <input
-            type="password"
-            value={password}
-            autoFocus
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
-            style={{
-              fontSize: 18,
-              padding: "10px 16px",
-              borderRadius: 9,
-              border: "1px solid #ccd",
-              outline: showPasswordError ? "2px solid #e11d48" : "none",
-              width: "100%",
-              minWidth: 170,
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handlePasswordSubmit(e);
-            }}
-          />
-          <button
-            type="submit"
-            style={{
-              background: "#2190e3",
-              color: "white",
-              fontWeight: 600,
-              fontSize: 17,
-              borderRadius: 10,
-              border: "none",
-              padding: "10px 28px",
-              cursor: "pointer",
-              marginTop: 4,
-            }}
-          >
-            Log in
-          </button>
-          {showPasswordError && (
-            <span style={{ color: "#e11d48", fontWeight: 500 }}>
-              Wrong password. Try again.
-            </span>
-          )}
-        </form>
-      </div>
+      <PasswordScreen
+        password={password}
+        setPassword={setPassword}
+        showPasswordError={showPasswordError}
+        onSubmit={handlePasswordSubmit}
+      />
     );
   }
 
@@ -489,65 +160,184 @@ function App() {
         zIndex: 0,
       }}
     >
-      {/* LOADING OVERLAY */}
       {showLoading && <LoadingOverlay progress={progress} />}
 
-      {/* How to use (lewy dolny róg) */}
-      <div
-        style={{
-          position: "fixed",
-          left: 16,
-          bottom: 16,
-          zIndex: 90,
-          display: "flex",
-          gap: 8,
-          flexDirection: isMobile() ? "column" : "row",
-          alignItems: "center",
-        }}
-      >
+      {/* Tryb edycji – przycisk po lewej */}
+      {!editMode && (
         <button
+          onClick={() => setAskPassword(true)}
           style={{
-            background: "#2190e3",
-            borderRadius: 10,
-            color: "white",
-            fontWeight: 600,
-            fontSize: 13,
-            padding: "8px 22px",
+            position: "fixed",
+            left: 14,
+            top: "50%",
+            transform: "translateY(-50%)",
+            background: "#1971c2",
+            color: "#fff",
             border: "none",
+            borderRadius: "60px",
+            boxShadow: "0 4px 16px #1971c223",
+            padding: "14px 28px",
+            fontWeight: 700,
+            fontSize: 17,
+            zIndex: 2222,
             cursor: "pointer",
-            letterSpacing: 0.2,
+            letterSpacing: 1,
+            outline: "none",
           }}
-          onClick={() => setShowHowToUse(true)}
         >
-          ℹ️ How to use?
+          Tryb edycji
         </button>
+      )}
+      {editMode && (
         <button
-          style={{
-            background: showInfoPoints ? "#2190e3" : "#bbb",
-            borderRadius: 10,
-            color: "white",
-            fontWeight: 600,
-            fontSize: 13,
-            padding: "8px 18px",
-            border: "none",
-            cursor: "pointer",
-            letterSpacing: 0.2,
+          onClick={() => {
+            setEditMode(false);
+            setEditingInfoPointId(null);
+            setPreviewInfoPointId(null);
           }}
-          onClick={() => setShowInfoPoints((v) => !v)}
+          style={{
+            position: "fixed",
+            left: 14,
+            top: "50%",
+            transform: "translateY(-50%)",
+            background: "#dee2e6",
+            color: "#1971c2",
+            border: "none",
+            borderRadius: "60px",
+            boxShadow: "0 4px 16px #1971c210",
+            padding: "14px 28px",
+            fontWeight: 700,
+            fontSize: 17,
+            zIndex: 2222,
+            cursor: "pointer",
+            letterSpacing: 1,
+            outline: "none",
+          }}
         >
-          {showInfoPoints ? "❌Hide info points" : "👁️‍🗨️Show info points"}
+          Wyłącz edycję
         </button>
-      </div>
-      {showHowToUse && <HowToUseModal onClose={() => setShowHowToUse(false)} />}
+      )}
 
-      {/* Kamera/fullscreen (prawy dolny róg) */}
+      {/* Modal hasła do trybu edycji */}
+      {askPassword && (
+        <div
+          style={{
+            position: "fixed",
+            left: 0,
+            top: 0,
+            width: "100vw",
+            height: "100vh",
+            background: "rgba(0,0,0,0.19)",
+            zIndex: 2022,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          onClick={() => setAskPassword(false)}
+        >
+          <form
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "#fff",
+              borderRadius: 14,
+              boxShadow: "0 4px 24px #0003",
+              padding: "24px 28px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 15,
+              alignItems: "stretch",
+              minWidth: 240,
+            }}
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (passwordInput === EDIT_PASSWORD) {
+                setEditMode(true);
+                setAskPassword(false);
+                setPasswordInput("");
+              }
+            }}
+          >
+            <span style={{ fontWeight: 700, fontSize: 19, color: "#185c92" }}>
+              Tryb edycji – podaj hasło
+            </span>
+            <input
+              type="password"
+              placeholder="Hasło"
+              value={passwordInput}
+              onChange={(e) => setPasswordInput(e.target.value)}
+              style={{
+                fontSize: 16,
+                padding: "8px 13px",
+                borderRadius: 8,
+                border: "1px solid #ccc",
+              }}
+            />
+            <button
+              type="submit"
+              style={{
+                background: "#1d8af2",
+                color: "white",
+                fontWeight: 600,
+                fontSize: 16,
+                borderRadius: 8,
+                border: "none",
+                padding: "9px 20px",
+                cursor: "pointer",
+                marginTop: 3,
+              }}
+            >
+              Dalej
+            </button>
+            <button
+              type="button"
+              onClick={() => setAskPassword(false)}
+              style={{
+                marginTop: 7,
+                background: "#f2f4f7",
+                border: "none",
+                color: "#333",
+                fontSize: 14,
+                borderRadius: 7,
+                padding: "7px 12px",
+                cursor: "pointer",
+              }}
+            >
+              Anuluj
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* Dolny lewy panel */}
+      <BottomLeftPanel
+        showHowToUse={showHowToUse}
+        setShowHowToUse={setShowHowToUse}
+        showInfoPoints={showInfoPoints}
+        setShowInfoPoints={setShowInfoPoints}
+        setShowAddModal={setShowAddModal}
+        isMobile={isMobile()}
+      />
+      {showHowToUse && <HowToUseModal onClose={() => setShowHowToUse(false)} />}
+      {showAddModal && (
+        <AddInfoPointModal
+          onAdd={(point: InfoPointData) => {
+            addInfoPoint(point);
+            setShowAddModal(false);
+          }}
+          onClose={() => setShowAddModal(false)}
+        />
+      )}
+
+      {/* Kamera/fullscreen */}
       <CameraControlsButtons
-        resetCamera={resetCamera}
+        resetCamera={cameraHooks.resetCamera}
         isFullscreen={isFullscreen}
-        toggleFullscreen={toggleFullscreen}
+        toggleFullscreen={() =>
+          cameraHooks.toggleFullscreen(isFullscreen, setIsFullscreen)
+        }
       />
 
-      {/* LINK COMPARISON – prawy górny róg */}
+      {/* Link do porównania */}
       <div
         style={{
           position: "fixed",
@@ -574,276 +364,31 @@ function App() {
         </a>
       </div>
 
-      {/* Górny lewy róg: przyciski */}
-      <div
-        style={{
-          position: "fixed",
-          left: isMobile() ? 8 : 24,
-          top: isMobile() ? 8 : 24,
-          zIndex: 91,
-          display: "flex",
-          gap: 12,
-          flexWrap: "wrap",
-          alignItems: "center",
-          justifyContent: "flex-start",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-          }}
-        >
-          <button
-            title={showIFC ? "Hide IFC model" : "Show IFC model"}
-            style={{
-              background: showIFC ? "#0ea5e9" : "#ef4444",
-              color: "#fff",
-              border: "none",
-              borderRadius: "50%",
-              width: 45,
-              height: 45,
-              fontSize: 27,
-              boxShadow: "0 2px 8px rgba(33,140,227,0.16)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-              transition: "background 0.2s",
-            }}
-            onClick={() => setShowIFC((v) => !v)}
-          >
-            🏗️
-          </button>
-          <span
-            style={{
-              fontSize: 13,
-              color: "#1d3a55",
-              marginTop: 4,
-              fontWeight: 500,
-              letterSpacing: 0.3,
-              userSelect: "none",
-            }}
-          >
-            IFC
-          </span>
-        </div>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-          }}
-        >
-          <button
-            title={
-              showPublicGlb ? "Hide building model" : "Show building model"
-            }
-            style={{
-              background: showPublicGlb ? "#16a34a" : "#ef4444",
-              color: "#fff",
-              border: "none",
-              borderRadius: "50%",
-              width: 45,
-              height: 45,
-              fontSize: 27,
-              boxShadow: "0 2px 8px rgba(33,140,227,0.16)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-              transition: "background 0.2s",
-            }}
-            onClick={() => setShowPublicGlb((v) => !v)}
-          >
-            🏢
-          </button>
-          <span
-            style={{
-              fontSize: 13,
-              color: "#1d3a55",
-              marginTop: 4,
-              fontWeight: 500,
-              letterSpacing: 0.3,
-              userSelect: "none",
-            }}
-          >
-            GLB
-          </span>
-        </div>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-          }}
-        >
-          <button
-            title="Upload GLB"
-            style={{
-              background: "#2190e3",
-              color: "#fff",
-              border: "none",
-              borderRadius: "50%",
-              width: 45,
-              height: 45,
-              fontSize: 27,
-              boxShadow: "0 2px 8px rgba(33,140,227,0.16)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-              transition: "background 0.2s",
-            }}
-            onClick={() => setUserGlbParamsOpen((o) => !o)}
-          >
-            📦
-          </button>
-          <span
-            style={{
-              fontSize: 13,
-              color: "#1d3a55",
-              marginTop: 4,
-              fontWeight: 500,
-              letterSpacing: 0.3,
-              userSelect: "none",
-            }}
-          >
-            Upload
-          </span>
-        </div>
-      </div>
+      {/* Przyciski lewy górny róg */}
+      <TopLeftButtons
+        showIFC={showIFC}
+        setShowIFC={setShowIFC}
+        showPublicGlb={showPublicGlb}
+        setShowPublicGlb={setShowPublicGlb}
+        setUserGlbParamsOpen={setUserGlbParamsOpen}
+        isMobile={isMobile()}
+      />
 
       {/* Panel uploadu GLB */}
       {userGlbParamsOpen && (
-        <div
-          style={{
-            position: "fixed",
-            left: isMobile() ? 8 : 24,
-            top: isMobile() ? 70 : 90,
-            zIndex: 92,
-            background: "#f5faff",
-            borderRadius: 10,
-            padding: "14px 22px",
-            boxShadow: "0 2px 12px #bbb7",
-            display: "flex",
-            flexDirection: "column",
-            gap: 9,
-            minWidth: 220,
-          }}
-        >
-          <input
-            type="file"
-            accept=".glb"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-              setUserGlbUrl(URL.createObjectURL(file));
-              setShowUserGlb(true);
-              setUserGlbPos([0, 0, 0]);
-              setUserGlbRot([0, 0, 0]);
-              setUserGlbScale([1, 1, 1]);
-            }}
-            style={{
-              width: 180,
-              background: "#fff",
-              border: "1px solid #bbb",
-              borderRadius: 8,
-              fontSize: 15,
-              marginBottom: 2,
-            }}
-          />
-          {userGlbUrl && (
-            <>
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <button
-                  onClick={() => setShowUserGlb((v) => !v)}
-                  style={{
-                    background: showUserGlb ? "#16a34a" : "#ef4444",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: 7,
-                    padding: "4px 14px",
-                    fontWeight: 600,
-                    fontSize: 15,
-                    cursor: "pointer",
-                  }}
-                >
-                  {showUserGlb ? "Hide" : "Show"}
-                </button>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                <span style={{ fontSize: 13, color: "#2261c5" }}>XYZ:</span>
-                {[0, 1, 2].map((ax) => (
-                  <input
-                    key={ax}
-                    type="number"
-                    value={userGlbPos[ax]}
-                    step={0.1}
-                    style={{ width: 36, marginLeft: 2 }}
-                    onChange={(e) =>
-                      setUserGlbPos(
-                        userGlbPos.map((v, i) =>
-                          i === ax ? parseFloat(e.target.value) : v
-                        ) as [number, number, number]
-                      )
-                    }
-                    title={`Position ${["X", "Y", "Z"][ax]}`}
-                  />
-                ))}
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                <span style={{ fontSize: 13, color: "#2261c5" }}>Rot:</span>
-                {[0, 1, 2].map((ax) => (
-                  <input
-                    key={ax}
-                    type="number"
-                    value={
-                      Math.round(((userGlbRot[ax] * 180) / Math.PI) * 100) / 100
-                    }
-                    step={100}
-                    min={-9999}
-                    max={9999}
-                    style={{ width: 36, marginLeft: 2 }}
-                    onChange={(e) =>
-                      setUserGlbRot(
-                        userGlbRot.map((v, i) =>
-                          i === ax
-                            ? (parseFloat(e.target.value) * Math.PI) / 180
-                            : v
-                        ) as [number, number, number]
-                      )
-                    }
-                    title={`Rotation ${["X", "Y", "Z"][ax]} (deg)`}
-                  />
-                ))}
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                <span style={{ fontSize: 13, color: "#2261c5" }}>Scale:</span>
-                {[0, 1, 2].map((ax) => (
-                  <input
-                    key={ax}
-                    type="number"
-                    value={userGlbScale[ax]}
-                    step={0.01}
-                    min={0.01}
-                    max={99}
-                    style={{ width: 36, marginLeft: 2 }}
-                    onChange={(e) =>
-                      setUserGlbScale(
-                        userGlbScale.map((v, i) =>
-                          i === ax ? parseFloat(e.target.value) : v
-                        ) as [number, number, number]
-                      )
-                    }
-                    title={`Scale ${["X", "Y", "Z"][ax]}`}
-                  />
-                ))}
-              </div>
-            </>
-          )}
-        </div>
+        <UserGlbUploadPanel
+          userGlbUrl={userGlbUrl}
+          showUserGlb={showUserGlb}
+          setShowUserGlb={setShowUserGlb}
+          setUserGlbUrl={setUserGlbUrl}
+          userGlbPos={userGlbPos}
+          setUserGlbPos={setUserGlbPos}
+          userGlbRot={userGlbRot}
+          setUserGlbRot={setUserGlbRot}
+          userGlbScale={userGlbScale}
+          setUserGlbScale={setUserGlbScale}
+          isMobile={isMobile()}
+        />
       )}
 
       {/* IFC PROPERTIES */}
@@ -854,12 +399,31 @@ function App() {
         />
       )}
 
+      {/* Panel szczegółów InfoPointa po prawej (tylko w trybie edycji!) */}
+      {editMode && editingPoint && (
+        <InfoPointDetailsPanel
+          infoPoint={editingPoint}
+          editMode={editMode}
+          onRequestEditMode={() => setAskPassword(true)}
+          onSave={(updated) => {
+            editInfoPoint(updated);
+          }}
+          onDelete={(id) => {
+            deleteInfoPoint(id);
+            setEditingInfoPointId(null);
+          }}
+          onClose={() => setEditingInfoPointId(null)}
+          getCurrentCameraPosition={getCurrentCameraPosition}
+          focusCameraOn={() => {}}
+        />
+      )}
+
       {/* CANVAS */}
       {objectUrl && (
         <Canvas
           className="h-full w-full touch-action-none"
           gl={{ antialias: false }}
-          dpr={getDpr()}
+          dpr={isMobile() ? 2 : Math.min(window.devicePixelRatio, 2)}
           camera={{
             position: isMobile() ? [90, 70, 30] : [20, 110, 7.4],
             fov: isMobile() ? 36 : 60,
@@ -878,28 +442,36 @@ function App() {
           }}
         >
           <ambientLight intensity={0.8} />
-          <CameraControls ref={cameraControls} makeDefault {...controlProps} />
+          <CameraControls
+            ref={cameraControls}
+            makeDefault
+            azimuthRotateSpeed={isMobile() ? 0.45 : 1}
+            polarRotateSpeed={isMobile() ? 0.5 : 1}
+            truckSpeed={isMobile() ? 0.4 : 1}
+            minDistance={8}
+            maxDistance={900}
+            verticalDragToForward={false}
+          />
           <Suspense fallback={null}>
             <group
               position={splatOption.position}
               rotation={splatOption.rotation}
               scale={splatOption.scale}
             >
-              <Splat url={objectUrl} maxSplats={effectiveSplats} />
-              {showInfoPoints && (
-                <InfoPointList
-                  style={infoPanelStyle}
-                  points={infoPoints}
-                  activeId={activeInfoPoint}
-                  onSelect={(id) => {
-                    setActiveInfoPoint(id === activeInfoPoint ? null : id);
-                    const point = infoPoints.find((p) => p.id === id);
-                    if (point && point.cameraPosition)
-                      focusCameraOn(point.cameraPosition, point.position);
-                  }}
-                  onClose={() => setActiveInfoPoint(null)}
-                />
-              )}
+              <Splat
+                url={objectUrl}
+                maxSplats={isMobile() ? 5000000 : 10000000}
+              />
+              <InfoPointCanvasGroup
+                infoPoints={infoPoints}
+                activeInfoPoint={editMode ? null : previewInfoPointId}
+                setActiveInfoPoint={handleInfoPointClick}
+                showInfoPoints={showInfoPoints}
+                infoPanelStyle={getInfoPanelStyle(isMobile())}
+                onShowDetails={handleInfoPointClick}
+                editMode={editMode}
+                onClosePreview={() => setPreviewInfoPointId(null)}
+              />
             </group>
             {showIFC && (
               <IFCModel
@@ -912,9 +484,9 @@ function App() {
               <Suspense fallback={null}>
                 <GLBModel
                   url={PUBLIC_GLB.url}
-                  position={publicGlbPos}
-                  rotation={publicGlbRot}
-                  scale={publicGlbScale}
+                  position={[14, 0.8, -23]}
+                  rotation={[0, 160, 0]}
+                  scale={[1, 1, 1]}
                   visible={showPublicGlb}
                 />
               </Suspense>
