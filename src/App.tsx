@@ -21,8 +21,10 @@ import { useCameraWASD } from "./hooks/useCameraWASD";
 import { useSplatLoader } from "./hooks/useSplatLoader";
 import { useAuth } from "./hooks/useAuth";
 import { InfoPointData } from "./utils/types";
-import { APP_PASSWORD, PUBLIC_GLB } from "./utils/constants";
 import { isMobile, getInfoPanelStyle } from "./utils/helpers";
+
+// -- TYPY POMOCNICZE --
+type IfcProps = Record<string, unknown>; // możesz podmienić na swój dokładny typ jeśli masz
 
 const splatOption = {
   name: "04.06.2024",
@@ -37,7 +39,7 @@ function App() {
     useInfoPoints();
   const [showAddModal, setShowAddModal] = useState(false);
   const [showIFC, setShowIFC] = useState(false);
-  const [ifcProperties, setIfcProperties] = useState<any>(null);
+  const [ifcProperties, setIfcProperties] = useState<IfcProps | null>(null);
   const [showHowToUse, setShowHowToUse] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showInfoPoints, setShowInfoPoints] = useState(true);
@@ -72,8 +74,10 @@ function App() {
   );
   const editingPoint = infoPoints.find((p) => p.id === editingInfoPointId);
 
-  // CameraControls ref
-  const cameraControls = useRef<any>(null);
+  // CameraControls ref – typowanie na podstawie @react-three/drei
+  const cameraControls = useRef<
+    import("@react-three/drei").CameraControls | null
+  >(null);
 
   // Autoryzacja
   const {
@@ -85,7 +89,7 @@ function App() {
   } = useAuth();
 
   const { objectUrl, progress, showLoading } = useSplatLoader(splatOption.url);
-  const cameraHooks = useCameraControls(setEditingInfoPointId, cameraControls);
+  const cameraHooks = useCameraControls(setEditingInfoPointId);
 
   useCameraWASD(
     cameraControls,
@@ -128,14 +132,13 @@ function App() {
   };
 
   // Ustaw kamerę (do panelu edycji)
-  const getCurrentCameraPosition = () =>
-    cameraControls?.current?.camera?.position
-      ? [
-          cameraControls.current.camera.position.x,
-          cameraControls.current.camera.position.y,
-          cameraControls.current.camera.position.z,
-        ]
-      : [0, 0, 0];
+  const getCurrentCameraPosition = (): [number, number, number] => {
+    if (cameraControls.current && cameraControls.current.camera) {
+      const { x, y, z } = cameraControls.current.camera.position;
+      return [x, y, z];
+    }
+    return [0, 0, 0];
+  };
 
   // Logowanie
   if (!isAuthenticated) {
@@ -468,7 +471,6 @@ function App() {
                 setActiveInfoPoint={handleInfoPointClick}
                 showInfoPoints={showInfoPoints}
                 infoPanelStyle={getInfoPanelStyle(isMobile())}
-                onShowDetails={handleInfoPointClick}
                 editMode={editMode}
                 onClosePreview={() => setPreviewInfoPointId(null)}
               />
@@ -483,10 +485,10 @@ function App() {
             {showPublicGlb && (
               <Suspense fallback={null}>
                 <GLBModel
-                  url={PUBLIC_GLB.url}
-                  position={[14, 0.8, -23]}
-                  rotation={[0, 160, 0]}
-                  scale={[1, 1, 1]}
+                  url={userGlbUrl ?? ""}
+                  position={userGlbPos}
+                  rotation={userGlbRot}
+                  scale={userGlbScale}
                   visible={showPublicGlb}
                 />
               </Suspense>
