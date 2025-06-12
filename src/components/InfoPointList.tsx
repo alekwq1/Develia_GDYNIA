@@ -1,11 +1,12 @@
 import { InfoPoint, InfoPointData } from "./InfoPoint";
 
-type InfoPointListProps = {
+export type InfoPointListProps = {
+  style: React.CSSProperties;
   points: InfoPointData[];
   activeId: string | null;
   onSelect: (id: string) => void;
   onClose: () => void;
-  style?: React.CSSProperties;
+  editMode?: boolean; // ← DODAJ TO!
 };
 
 export function InfoPointList({

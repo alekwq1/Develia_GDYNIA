@@ -5,7 +5,8 @@ import { Splat } from "./splat-object";
 import IFCModel from "./components/IFCModel";
 import HowToUseModal from "./components/HowToUseModal";
 import LoadingOverlay from "./components/LoadingOverlay";
-import IFCPropertiesPanel from "./components/IFCPropertiesPanel";
+import { IFCElementProperties } from "./components/IFCPropertiesPanel";
+
 import CameraControlsButtons from "./components/CameraControlsButtons";
 import AddInfoPointModal from "./components/AddInfoPointModal";
 import GLBModel from "./components/GLBModel";
@@ -23,9 +24,6 @@ import { useAuth } from "./hooks/useAuth";
 import { InfoPointData } from "./utils/types";
 import { isMobile, getInfoPanelStyle } from "./utils/helpers";
 
-// -- TYPY POMOCNICZE --
-type IfcProps = Record<string, unknown>; // możesz podmienić na swój dokładny typ jeśli masz
-
 const splatOption = {
   name: "04.06.2024",
   url: "https://huggingface.co/Alekso/Gdynia_2025_06_08/resolve/main/08_06_2025.splat",
@@ -39,7 +37,8 @@ function App() {
     useInfoPoints();
   const [showAddModal, setShowAddModal] = useState(false);
   const [showIFC, setShowIFC] = useState(false);
-  const [ifcProperties, setIfcProperties] = useState<IfcProps | null>(null);
+  const [ifcProperties, setIfcProperties] =
+    useState<IFCElementProperties | null>(null);
   const [showHowToUse, setShowHowToUse] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showInfoPoints, setShowInfoPoints] = useState(true);
@@ -74,7 +73,7 @@ function App() {
   );
   const editingPoint = infoPoints.find((p) => p.id === editingInfoPointId);
 
-  // CameraControls ref – typowanie na podstawie @react-three/drei
+  // CameraControls ref
   const cameraControls = useRef<
     import("@react-three/drei").CameraControls | null
   >(null);
@@ -313,6 +312,7 @@ function App() {
 
       {/* Dolny lewy panel */}
       <BottomLeftPanel
+        showHowToUse={showHowToUse}
         setShowHowToUse={setShowHowToUse}
         showInfoPoints={showInfoPoints}
         setShowInfoPoints={setShowInfoPoints}

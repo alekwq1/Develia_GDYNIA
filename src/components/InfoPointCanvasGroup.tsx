@@ -9,7 +9,7 @@ type Props = {
   showInfoPoints: boolean;
   infoPanelStyle: React.CSSProperties;
   editMode?: boolean;
-  onClosePreview?: () => void; // zamknięcie dymka (X)
+  onClosePreview?: () => void;
 };
 
 const InfoPointCanvasGroup: React.FC<Props> = ({
@@ -26,7 +26,7 @@ const InfoPointCanvasGroup: React.FC<Props> = ({
     <InfoPointList
       style={infoPanelStyle}
       points={infoPoints}
-      activeId={!editMode ? activeInfoPoint : null} // dymek TYLKO w trybie normalnym!
+      activeId={!editMode ? activeInfoPoint : null}
       onSelect={setActiveInfoPoint}
       onClose={onClosePreview ? onClosePreview : () => {}}
       editMode={editMode}
