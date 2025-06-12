@@ -1,7 +1,6 @@
 import React from "react";
 
 type Props = {
-  showHowToUse: boolean;
   setShowHowToUse: (v: boolean) => void;
   showInfoPoints: boolean;
   setShowInfoPoints: (v: boolean | ((v: boolean) => boolean)) => void;
@@ -10,7 +9,6 @@ type Props = {
 };
 
 const BottomLeftPanel: React.FC<Props> = ({
-  showHowToUse,
   setShowHowToUse,
   showInfoPoints,
   setShowInfoPoints,
