@@ -1,4 +1,4 @@
-import React, { Suspense, useRef, useState } from "react";
+import { Suspense, useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Environment, CameraControls } from "@react-three/drei";
 import { Splat } from "./splat-object";
