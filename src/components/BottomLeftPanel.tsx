@@ -1,5 +1,14 @@
 import React from "react";
 
+type Props = {
+  showHowToUse: boolean;
+  setShowHowToUse: (v: boolean) => void;
+  showInfoPoints: boolean;
+  setShowInfoPoints: (v: boolean | ((v: boolean) => boolean)) => void;
+  setShowAddModal: (v: boolean) => void;
+  isMobile: boolean;
+};
+
 const BottomLeftPanel: React.FC<Props> = ({
   showHowToUse,
   setShowHowToUse,
@@ -30,7 +39,7 @@ const BottomLeftPanel: React.FC<Props> = ({
         padding: "8px 22px",
         border: "none",
         cursor: "pointer",
-        letterSpacing: 0.2,
+        letterSpacing: "0.2px",
       }}
       onClick={() => setShowHowToUse(true)}
     >
@@ -46,7 +55,7 @@ const BottomLeftPanel: React.FC<Props> = ({
         padding: "8px 18px",
         border: "none",
         cursor: "pointer",
-        letterSpacing: 0.2,
+        letterSpacing: "0.2px",
       }}
       onClick={() => setShowInfoPoints((v) => !v)}
     >
@@ -62,7 +71,7 @@ const BottomLeftPanel: React.FC<Props> = ({
         padding: "8px 22px",
         border: "none",
         cursor: "pointer",
-        letterSpacing: 0.2,
+        letterSpacing: "0.2px",
       }}
       onClick={() => setShowAddModal(true)}
     >

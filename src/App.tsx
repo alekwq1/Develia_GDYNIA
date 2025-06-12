@@ -5,7 +5,7 @@ import { Splat } from "./splat-object";
 import IFCModel from "./components/IFCModel";
 import HowToUseModal from "./components/HowToUseModal";
 import LoadingOverlay from "./components/LoadingOverlay";
-import IFCPropertiesPanel from "./components/IFCPropertiesPanel";
+import type { IFCElementProperties } from "./components/IFCPropertiesPanel";
 import CameraControlsButtons from "./components/CameraControlsButtons";
 import AddInfoPointModal from "./components/AddInfoPointModal";
 import GLBModel from "./components/GLBModel";
@@ -95,7 +95,7 @@ function App() {
     cameraControls,
     isFullscreen,
     cameraHooks.resetCamera,
-    () => cameraHooks.toggleFullscreen(isFullscreen, setIsFullscreen),
+    () => cameraHooks.toggleFullscreen(isFullscreen),
     setEditingInfoPointId
   );
 
@@ -335,9 +335,7 @@ function App() {
       <CameraControlsButtons
         resetCamera={cameraHooks.resetCamera}
         isFullscreen={isFullscreen}
-        toggleFullscreen={() =>
-          cameraHooks.toggleFullscreen(isFullscreen, setIsFullscreen)
-        }
+        toggleFullscreen={() => cameraHooks.toggleFullscreen(isFullscreen)}
       />
 
       {/* Link do porównania */}
