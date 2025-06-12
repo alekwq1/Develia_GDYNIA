@@ -2,7 +2,7 @@ import { Suspense, useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Environment, CameraControls } from "@react-three/drei";
 import { Splat } from "./splat-object";
-import IFCModel, { IFCElementProperties } from "./components/IFCModel"; // <-- POPRAWNY IMPORT!
+import IFCModel, { IFCElementProperties } from "./components/IFCModel";
 import HowToUseModal from "./components/HowToUseModal";
 import LoadingOverlay from "./components/LoadingOverlay";
 import CameraControlsButtons from "./components/CameraControlsButtons";
@@ -76,6 +76,19 @@ function App() {
   const cameraControls = useRef<
     import("@react-three/drei").CameraControls | null
   >(null);
+
+  // --- Poprawiona funkcja resetowania kamery ---
+  const resetCamera = () => {
+    cameraControls.current?.setLookAt(
+      isMobile() ? 90 : 20,
+      isMobile() ? 70 : 110,
+      isMobile() ? 30 : 7.4,
+      0,
+      0,
+      0,
+      true
+    );
+  };
 
   // Autoryzacja
   const {
@@ -330,7 +343,7 @@ function App() {
 
       {/* Kamera/fullscreen */}
       <CameraControlsButtons
-        resetCamera={cameraHooks.resetCamera}
+        resetCamera={resetCamera}
         isFullscreen={isFullscreen}
         toggleFullscreen={() => cameraHooks.toggleFullscreen(setIsFullscreen)}
       />
@@ -345,7 +358,7 @@ function App() {
         }}
       >
         <a
-          href="https://equinorleba.netlify.app/"
+          href="https://develiakopernika69.netlify.app/"
           target="_blank"
           rel="noopener noreferrer"
           style={{
@@ -480,7 +493,7 @@ function App() {
             {showPublicGlb && (
               <Suspense fallback={null}>
                 <GLBModel
-                  url={userGlbUrl ?? ""}
+                  url={userGlbUrl ?? "/models/building.glb"}
                   position={userGlbPos}
                   rotation={userGlbRot}
                   scale={userGlbScale}
