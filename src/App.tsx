@@ -5,7 +5,7 @@ import { Splat } from "./splat-object";
 import IFCModel from "./components/IFCModel";
 import HowToUseModal from "./components/HowToUseModal";
 import LoadingOverlay from "./components/LoadingOverlay";
-import type { IFCElementProperties } from "./components/IFCPropertiesPanel";
+
 import CameraControlsButtons from "./components/CameraControlsButtons";
 import AddInfoPointModal from "./components/AddInfoPointModal";
 import GLBModel from "./components/GLBModel";
@@ -41,7 +41,7 @@ function App() {
   const [showIFC, setShowIFC] = useState(false);
   const [ifcProperties, setIfcProperties] = useState<IfcProps | null>(null);
   const [showHowToUse, setShowHowToUse] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isFullscreen] = useState(false);
   const [showInfoPoints, setShowInfoPoints] = useState(true);
   const [showPublicGlb, setShowPublicGlb] = useState(false);
   const [userGlbUrl, setUserGlbUrl] = useState<string | null>(null);

@@ -38,12 +38,15 @@ export default function AddInfoPointModal({ onAdd, onClose }: Props) {
       return;
     }
     const newPoint: InfoPointData = {
-      id: id || label + String(Date.now()),
+      id: crypto.randomUUID(), // pewny unikalny ID
       label,
       icon,
       content,
       position,
-      cameraPosition,
+      cameraPosition:
+        cameraPosition && cameraPosition.some((v) => v !== 0)
+          ? cameraPosition
+          : undefined,
     };
     onAdd(newPoint);
   };
