@@ -15,7 +15,7 @@ export default function AddInfoPointModal({ onAdd, onClose }: Props) {
   const [label, setLabel] = useState("");
   const [icon, setIcon] = useState("");
   const [content, setContent] = useState("");
-  const [id, setId] = useState("");
+
   const [position, setPosition] = useState<[number, number, number]>([0, 3, 0]);
   const [cameraPosition, setCameraPosition] = useState<
     [number, number, number] | undefined

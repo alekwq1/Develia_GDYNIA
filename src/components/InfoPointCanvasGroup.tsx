@@ -28,7 +28,7 @@ const InfoPointCanvasGroup: React.FC<Props> = ({
       points={infoPoints}
       activeId={!editMode ? activeInfoPoint : null} // dymek TYLKO w trybie normalnym!
       onSelect={setActiveInfoPoint}
-      onClose={onClosePreview}
+      onClose={onClosePreview ? onClosePreview : () => {}}
       editMode={editMode}
     />
   );

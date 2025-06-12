@@ -1,14 +1,5 @@
 import React from "react";
 
-type Props = {
-  showHowToUse: boolean;
-  setShowHowToUse: React.Dispatch<React.SetStateAction<boolean>>;
-  showInfoPoints: boolean;
-  setShowInfoPoints: React.Dispatch<React.SetStateAction<boolean>>;
-  setShowAddModal: React.Dispatch<React.SetStateAction<boolean>>;
-  isMobile: boolean;
-};
-
 const BottomLeftPanel: React.FC<Props> = ({
   showHowToUse,
   setShowHowToUse,

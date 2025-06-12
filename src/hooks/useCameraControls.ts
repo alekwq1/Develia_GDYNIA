@@ -27,10 +27,7 @@ export function useCameraControls(
     setActiveInfoPoint(null);
   };
 
-  const toggleFullscreen = (
-    isFullscreen: boolean,
-    setIsFullscreen: (v: boolean) => void
-  ) => {
+  const toggleFullscreen = (setIsFullscreen: (v: boolean) => void) => {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen();
       setIsFullscreen(true);
