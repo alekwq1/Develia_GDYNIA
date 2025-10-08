@@ -7,10 +7,7 @@ import HowToUseModal from "./components/HowToUseModal";
 import LoadingOverlay from "./components/LoadingOverlay";
 import CameraControlsButtons from "./components/CameraControlsButtons";
 import AddInfoPointModal from "./components/AddInfoPointModal";
-import GLBModel from "./components/GLBModel";
-import TopLeftButtons from "./components/TopLeftButtons";
-import UserGlbUploadPanel from "./components/UserGlbUploadPanel";
-import PasswordScreen from "./components/PasswordScreen";
+
 import BottomLeftPanel from "./components/BottomLeftPanel";
 import InfoPointCanvasGroup from "./components/InfoPointCanvasGroup";
 import InfoPointDetailsPanel from "./components/InfoPointDetailsPanel";
@@ -19,24 +16,15 @@ import { useInfoPoints } from "./hooks/useInfoPoints";
 import { useCameraControls } from "./hooks/useCameraControls";
 import { useCameraWASD } from "./hooks/useCameraWASD";
 import { useSplatLoader } from "./hooks/useSplatLoader";
-import { useAuth } from "./hooks/useAuth";
+
 import { InfoPointData } from "./utils/types";
 import { isMobile, getInfoPanelStyle } from "./utils/helpers";
 import PlaneClickCatcher from "./components/PlaneClickCatcher";
 
-// --- TABLICA MODELI GLB ---
-export type GLBModelSettings = {
-  url: string;
-  label: string;
-  visible: boolean;
-  position: [number, number, number];
-  rotation: [number, number, number];
-  scale?: [number, number, number];
-};
-
+// --- USTAWIENIA SPLAT ---
 const splatOption = {
-  name: "04.06.2024",
-  url: "https://huggingface.co/Alekso/Equinor_02_06_2025/resolve/main/Equinor_02_06_2025.splat",
+  name: "06.2025",
+  url: "https://huggingface.co/Alekso/Gdynia_2025_06_08/resolve/main/08_06_2025.splat",
   position: [0, -1, 0] as [number, number, number],
   rotation: [0, 0, 0] as [number, number, number],
   scale: [1, 1, 1] as [number, number, number],
@@ -49,24 +37,7 @@ function App() {
   >(null);
 
   const [showSplatLoadedOverlay, setShowSplatLoadedOverlay] = useState(false);
-  const [glbModels, setGlbModels] = useState<GLBModelSettings[]>([
-    {
-      url: "/models/building.glb",
-      label: "Budynek bazowy",
-      visible: false,
-      position: [14, 0.6, -23],
-      rotation: [0, 160, 0],
-      scale: [1, 1, 1],
-    },
-    {
-      url: "/models/building1.glb",
-      label: "buda oraz SITEMARKS",
-      visible: false,
-      position: [79.5, -82.7, -6.2],
-      rotation: [0, 90.5, 0],
-      scale: [1, 1, 1],
-    },
-  ]);
+
   // POBIERZ AKTUALNY, NAJNOWSZY infoPoints!
   const {
     infoPoints,
@@ -75,6 +46,7 @@ function App() {
     deleteInfoPoint,
     setInfoPoints,
   } = useInfoPoints();
+
   const [showAddModal, setShowAddModal] = useState(false);
   const [showIFC, setShowIFC] = useState(false);
   const [ifcProperties, setIfcProperties] =
@@ -82,19 +54,6 @@ function App() {
   const [showHowToUse, setShowHowToUse] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showInfoPoints, setShowInfoPoints] = useState(true);
-  const [showPublicGlb] = useState(false);
-  const [userGlbUrl, setUserGlbUrl] = useState<string | null>(null);
-  const [showUserGlb, setShowUserGlb] = useState(true);
-  const [userGlbParamsOpen, setUserGlbParamsOpen] = useState(false);
-  const [userGlbPos, setUserGlbPos] = useState<[number, number, number]>([
-    0, 0, 0,
-  ]);
-  const [userGlbRot, setUserGlbRot] = useState<[number, number, number]>([
-    0, 0, 0,
-  ]);
-  const [userGlbScale, setUserGlbScale] = useState<[number, number, number]>([
-    1, 1, 1,
-  ]);
   const [hideUI, setHideUI] = useState(false);
 
   // Tryb edycji i hasło
@@ -132,15 +91,6 @@ function App() {
     );
   };
 
-  // Autoryzacja
-  const {
-    password,
-    setPassword,
-    isAuthenticated,
-    showPasswordError,
-    handlePasswordSubmit,
-  } = useAuth();
-
   const { objectUrl, progress, showLoading } = useSplatLoader(splatOption.url);
   useEffect(() => {
     if (!showLoading && objectUrl) {
@@ -152,6 +102,7 @@ function App() {
       return () => clearTimeout(timeout);
     }
   }, [showLoading, objectUrl]);
+
   const cameraHooks = useCameraControls(setEditingInfoPointId);
 
   useCameraWASD(
@@ -249,18 +200,6 @@ function App() {
     reader.readAsText(file);
   };
 
-  // Logowanie
-  if (!isAuthenticated) {
-    return (
-      <PasswordScreen
-        password={password}
-        setPassword={setPassword}
-        showPasswordError={showPasswordError}
-        onSubmit={handlePasswordSubmit}
-      />
-    );
-  }
-
   return (
     <div
       style={{
@@ -298,7 +237,7 @@ function App() {
         </div>
       )}
 
-      {/* PRZYCISK UKRYWANIA UI + Progress Compare */}
+      {/* PRZYCISK UKRYWANIA UI (USUNIĘTO link Progress Compare) */}
       <div
         style={{
           position: "fixed",
@@ -334,23 +273,6 @@ function App() {
         >
           {hideUI ? "🙉" : "🙈"}
         </button>
-        <a
-          href="https://equinorleba.netlify.app/"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            background: "#2190e3",
-            color: "white",
-            fontWeight: 600,
-            fontSize: 13,
-            borderRadius: 9,
-            padding: "7px 18px",
-            textDecoration: "none",
-            display: hideUI ? "none" : "block",
-          }}
-        >
-          ↔️ Progress Compare
-        </a>
       </div>
 
       {/* --- RESZTA UI TYLKO JEŚLI !hideUI --- */}
@@ -466,6 +388,34 @@ function App() {
                 </label>
               </div>
             )}
+          </div>
+
+          {/* Mini panel w LEWYM GÓRNYM rogu (zamiast TopLeftButtons): IFC ON/OFF */}
+          <div
+            style={{
+              position: "fixed",
+              left: 14,
+              top: 16,
+              zIndex: 2222,
+              display: "flex",
+              gap: 8,
+            }}
+          >
+            <button
+              onClick={() => setShowIFC((v) => !v)}
+              style={{
+                background: showIFC ? "#2f9e44" : "#adb5bd",
+                color: "white",
+                border: "none",
+                borderRadius: 9,
+                padding: "8px 14px",
+                fontWeight: 700,
+                cursor: "pointer",
+                boxShadow: "0 3px 8px #0001",
+              }}
+            >
+              IFC: {showIFC ? "ON" : "OFF"}
+            </button>
           </div>
 
           {/* Modal hasła do trybu edycji */}
@@ -590,33 +540,6 @@ function App() {
             }
           />
 
-          {/* Przyciski lewy górny róg */}
-          <TopLeftButtons
-            showIFC={showIFC}
-            setShowIFC={setShowIFC}
-            glbModels={glbModels}
-            setGlbModels={setGlbModels}
-            setUserGlbParamsOpen={setUserGlbParamsOpen}
-            isMobile={isMobile()}
-          />
-
-          {/* Panel uploadu GLB */}
-          {userGlbParamsOpen && (
-            <UserGlbUploadPanel
-              userGlbUrl={userGlbUrl}
-              showUserGlb={showUserGlb}
-              setShowUserGlb={setShowUserGlb}
-              setUserGlbUrl={setUserGlbUrl}
-              userGlbPos={userGlbPos}
-              setUserGlbPos={setUserGlbPos}
-              userGlbRot={userGlbRot}
-              setUserGlbRot={setUserGlbRot}
-              userGlbScale={userGlbScale}
-              setUserGlbScale={setUserGlbScale}
-              isMobile={isMobile()}
-            />
-          )}
-
           {/* IFC PROPERTIES */}
           {showIFC && ifcProperties && (
             <IFCPropertiesPanel
@@ -694,6 +617,7 @@ function App() {
             maxDistance={900}
             verticalDragToForward={false}
           />
+
           <Suspense fallback={null}>
             {/* Gaussian Splatting + InfoPointy */}
             <group
@@ -716,51 +640,13 @@ function App() {
               />
             </group>
 
-            {/* --- STAŁE MODELE GLB --- */}
-            {glbModels
-              .filter((m) => m.visible)
-              .map((m, i) => (
-                <Suspense fallback={null} key={m.label + i}>
-                  <GLBModel
-                    url={m.url}
-                    position={m.position}
-                    rotation={m.rotation}
-                    scale={m.scale || [1, 1, 1]}
-                    visible={m.visible}
-                  />
-                </Suspense>
-              ))}
-
+            {/* IFC */}
             {showIFC && (
               <IFCModel
                 onPropertiesSelected={setIfcProperties}
                 rotationY={95}
                 visible={showIFC}
               />
-            )}
-
-            {showPublicGlb && (
-              <Suspense fallback={null}>
-                <GLBModel
-                  url={userGlbUrl ?? "/models/building.glb"}
-                  position={userGlbPos}
-                  rotation={userGlbRot}
-                  scale={userGlbScale}
-                  visible={showPublicGlb}
-                />
-              </Suspense>
-            )}
-
-            {showUserGlb && userGlbUrl && (
-              <Suspense fallback={null}>
-                <GLBModel
-                  url={userGlbUrl}
-                  position={userGlbPos}
-                  rotation={userGlbRot}
-                  scale={userGlbScale}
-                  visible={showUserGlb}
-                />
-              </Suspense>
             )}
 
             <Environment preset="city" />
